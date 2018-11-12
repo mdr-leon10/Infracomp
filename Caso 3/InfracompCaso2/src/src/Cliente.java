@@ -58,8 +58,9 @@ public class Cliente {
     private long timeResp = 0;
     private static final int TIMEOUT = 1000000;
     
-    //Puerto
+    //Direccionamiento
     private static final int PORT = 9160;
+    private static final String IPDestino = "ACA VA LA IP DEL SERVIDOR";
     
     //Cliente
     PrintWriter writer = null;
@@ -91,7 +92,7 @@ public class Cliente {
     	int port = 9160;
     	   try 
     	   {
-              socket = new Socket(InetAddress.getLocalHost(), port);
+              socket = new Socket(IPDestino, port);
            } 
     	   catch (Exception e) 
     	   { 
