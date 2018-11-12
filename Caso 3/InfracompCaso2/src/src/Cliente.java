@@ -54,6 +54,9 @@ public class Cliente {
     private static final String ERRCERT = "No es valido el certificado dado";
     private static final String CONSULTA = "CONS1: ";
     private static final String HCONSULTA = "HASHCONS: ";
+    private long timeSimetrica = 0;
+    private long timeResp = 0;
+    private static final int TIMEOUT = 1000000;
     
     //Puerto
     private static final int PORT = 9160;
@@ -65,6 +68,7 @@ public class Cliente {
     Socket socket = null;
     X509Certificate cliCert = null;
     KeyPair key = null;
+    private boolean sent = false;
     
     //Servidor
     X509Certificate servCert = null;
@@ -102,8 +106,7 @@ public class Cliente {
     
     public void establecerConexion () throws IOException
     {
-        System.out.println("Desea conectarse a Novasoft financiero en linea: (Y/N)");
-        String r = bf.readLine();
+        String r = "y";
         
         if(r.equals("1") || r.toLowerCase().equals("y")) {
             writer.println(INIC);
@@ -331,26 +334,64 @@ public class Cliente {
         }
     }
     
-    public void enviar() throws IOException, InvalidKeyException, NoSuchAlgorithmException, CertificateException
+    public void enviar()
     {
-        autenticarse();
-        establecerPuerto();
-        establecerConexion();
-        confirmarAlgoritmos();
-        intercambiarCertificados();
-        obtenerLlaveSimetrica();
-        retornarLlaveSimetrica();
-        generarConsulta();
-        esperarRespuesta(); 
+    	try {
+    			timeResp = System.currentTimeMillis();
+    			autenticarse();
+    			establecerPuerto();
+    			establecerConexion();
+    			definirAlgoritmos();
+    			timeSimetrica = System.currentTimeMillis();
+    			intercambiarCertificados();
+    			timeSimetrica = System.currentTimeMillis() - timeSimetrica;
+    			obtenerLlaveSimetrica();;
+    			retornarLlaveSimetrica();
+    			generarConsulta();
+    			esperarRespuesta(); 
+    			sent = true;
+    			timeResp = System.currentTimeMillis() - timeResp;
+    		} 
+    	catch (Exception e){ e.printStackTrace(); timeSimetrica = 0; timeResp = 0; sent = false; }
+    }
+    
+    private void definirAlgoritmos() throws IOException {
+    	ALGORITMOS = new String[2];
+    	ALGORITMOS[0] = AES;
+    	ALGORITMOS[1] = MD5;
+    	
+    	String msg = ALG + ":" + ALGORITMOS[0] + ":RSA:" + ALGORITMOS[1];
+        writer.println(msg);
+        System.out.println(SOUT + msg);
+        
+        //Recibir confirmacion
+        String r = reader.readLine();
+        if (r!=null)
+        {
+            System.out.println(SIN + r);
+        }
+        else
+        {
+            System.out.println(CTIMEOUT);
+            System.exit(-1);
+        }
+	}
+
+	public long getTimeSim(){
+        return timeSimetrica;
+    }
+
+    public long getTimeAct(){
+        return timeResp;
+    }
+
+    public boolean isSent() {
+        return sent;
     }
     
     public static void main(String[] args) {
 		Cliente c = new Cliente();
-		try {
 			c.enviar();
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 }
